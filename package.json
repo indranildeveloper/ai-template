@@ -1,19 +1,22 @@
 {
-  "name": "ai-template",
-  "module": "index.ts",
-  "type": "module",
-  "private": true,
-  "scripts": {
-    "dev": "bun run index.ts"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "concurrently": "^10.0.5"
-  },
-  "peerDependencies": {
-    "typescript": "^7"
-  },
-  "workspaces": [
-    "packages/*"
-  ]
+    "name": "ai-template",
+    "module": "index.ts",
+    "type": "module",
+    "private": true,
+    "scripts": {
+        "dev": "bun run index.ts",
+        "format": "prettier --write ."
+    },
+    "devDependencies": {
+        "@types/bun": "latest",
+        "concurrently": "^10.0.5",
+        "prettier": "^3.9.8",
+        "prettier-plugin-tailwindcss": "^0.8.1"
+    },
+    "peerDependencies": {
+        "typescript": "^7"
+    },
+    "workspaces": [
+        "packages/*"
+    ]
 }
