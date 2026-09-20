@@ -1,4 +1,5 @@
-import type { FC, KeyboardEvent } from "react";
+import { useRef, type FC, type KeyboardEvent } from "react";
+import axios from "axios";
 import { useForm } from "react-hook-form";
 import { ArrowUpIcon } from "lucide-react";
 import { Button } from "../ui/button";
@@ -8,11 +9,16 @@ interface IFormData {
 }
 
 const ChatBot: FC = () => {
+    const conversationId = useRef(crypto.randomUUID());
     const { register, handleSubmit, reset, formState } = useForm<IFormData>();
 
-    const onSubmit = (data: IFormData) => {
-        console.log(data);
+    const onSubmit = async ({ prompt }: IFormData) => {
         reset();
+        const { data } = await axios.post("/api/chat", {
+            prompt,
+            conversationId: conversationId.current,
+        });
+        console.log(data);
     };
 
     const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
@@ -24,6 +30,7 @@ const ChatBot: FC = () => {
 
     return (
         <form
+            // eslint-disable-next-line react-hooks/refs
             onSubmit={handleSubmit(onSubmit)}
             onKeyDown={onKeyDown}
             className="flex flex-col items-end gap-2 rounded-3xl border-2 p-4"
