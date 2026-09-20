@@ -1,15 +1,9 @@
 import express, { type Request, type Response } from "express";
 import dotenv from "dotenv";
-import OpenAI from "openai";
 import z from "zod";
-import { conversationRepository } from "./repositories/conversation.repository";
+import { chatService } from "./services/chat.service";
 
 dotenv.config();
-
-const client = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: process.env.GROQ_BASE_URL,
-});
 
 const app = express();
 
@@ -46,29 +40,9 @@ app.post("/api/chat", async (req: Request, res: Response) => {
     try {
         const { prompt, conversationId } = req.body;
 
-        const messages =
-            conversationRepository.getMessagesByConversationId(conversationId);
+        const response = await chatService.sendMessage(prompt, conversationId);
 
-        messages.push({
-            role: "user",
-            content: prompt,
-        });
-
-        const response = await client.responses.create({
-            model: "openai/gpt-oss-safeguard-20b",
-            input: messages,
-            temperature: 0.2,
-            max_output_tokens: 100,
-        });
-
-        messages.push({
-            role: "assistant",
-            content: response.output_text,
-        });
-
-        conversationRepository.setMessages(conversationId, messages);
-
-        res.json({ message: response.output_text });
+        res.json({ message: response.message });
     } catch (error) {
         res.status(500).json({ error: "Failed to generate a response." });
     }
@@ -77,5 +51,3 @@ app.post("/api/chat", async (req: Request, res: Response) => {
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
 });
-
-// 30
