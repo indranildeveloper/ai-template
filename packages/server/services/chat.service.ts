@@ -25,7 +25,7 @@ export const chatService = {
             model: "openai/gpt-oss-safeguard-20b",
             input: messages,
             temperature: 0.2,
-            max_output_tokens: 100,
+            max_output_tokens: 200,
         });
 
         messages.push({

@@ -1,5 +1,6 @@
 import { useRef, useState, type FC, type KeyboardEvent } from "react";
 import axios from "axios";
+import ReactMarkdown from "react-markdown";
 import { useForm } from "react-hook-form";
 import { ArrowUpIcon } from "lucide-react";
 import { Button } from "../ui/button";
@@ -12,19 +13,33 @@ interface IChatResponse {
     message: string;
 }
 
+type IMessage = {
+    content: string;
+    role: "user" | "assistant";
+};
+
 const ChatBot: FC = () => {
-    const [messages, setMessages] = useState<string[]>([]);
+    const [messages, setMessages] = useState<IMessage[]>([]);
+    const [isAssistantTyping, setIsAssistantTyping] = useState<boolean>(false);
     const conversationId = useRef(crypto.randomUUID());
     const { register, handleSubmit, reset, formState } = useForm<IFormData>();
 
     const onSubmit = async ({ prompt }: IFormData) => {
-        setMessages((prevMessages) => [...prevMessages, prompt]);
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { content: prompt, role: "user" },
+        ]);
+        setIsAssistantTyping(true);
         reset();
         const { data } = await axios.post<IChatResponse>("/api/chat", {
             prompt,
             conversationId: conversationId.current,
         });
-        setMessages((prevMessages) => [...prevMessages, data.message]);
+        setMessages((prevMessages) => [
+            ...prevMessages,
+            { content: data.message, role: "assistant" },
+        ]);
+        setIsAssistantTyping(false);
     };
 
     const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
@@ -36,10 +51,22 @@ const ChatBot: FC = () => {
 
     return (
         <div>
-            <div>
+            <div className="mb-10 flex flex-col gap-3">
                 {messages.map((message, index) => (
-                    <p key={index}>{message}</p>
+                    <div
+                        key={index}
+                        className={`rounded-xl px-3 py-1 ${message.role === "user" ? "self-end bg-blue-600 text-white" : "self-start bg-gray-100 text-black"}`}
+                    >
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
                 ))}
+                {isAssistantTyping && (
+                    <div className="flex gap-1 self-start rounded-xl bg-gray-200 p-3">
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-gray-800"></div>
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-gray-800 [animation-delay:0.2s]"></div>
+                        <div className="h-2 w-2 animate-pulse rounded-full bg-gray-800 [animation-delay:0.4s]"></div>
+                    </div>
+                )}
             </div>
             <form
                 // eslint-disable-next-line react-hooks/refs
