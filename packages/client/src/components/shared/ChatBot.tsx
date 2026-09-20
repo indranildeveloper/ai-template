@@ -4,6 +4,14 @@ import TypingIndicator from "./TypingIndicator";
 import type { IMessage } from "./ChatMessages";
 import ChatMessages from "./ChatMessages";
 import ChatInput, { type IChatFormData } from "./ChatInput";
+import popSound from "@/assets/sounds/pop.mp3";
+import notificationSound from "@/assets/sounds/notification.mp3";
+
+const popAudio = new Audio(popSound);
+popAudio.volume = 0.2;
+
+const notificationAudio = new Audio(notificationSound);
+notificationAudio.volume = 0.2;
 
 interface IChatResponse {
     message: string;
@@ -23,6 +31,7 @@ const ChatBot: FC = () => {
             ]);
             setIsAssistantTyping(true);
             setError("");
+            popAudio.play();
             const { data } = await axios.post<IChatResponse>("/api/chat", {
                 prompt,
                 conversationId: conversationId.current,
@@ -31,6 +40,7 @@ const ChatBot: FC = () => {
                 ...prevMessages,
                 { content: data.message, role: "assistant" },
             ]);
+            notificationAudio.play();
         } catch (error) {
             console.error(error);
             setError("Something went wrong, please try again.");

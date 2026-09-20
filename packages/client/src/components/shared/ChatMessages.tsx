@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ClipboardEvent, type FC } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export interface IMessage {
     content: string;
@@ -32,9 +33,11 @@ const ChatMessages: FC<ChatMessagesProps> = ({ messages }) => {
                     key={index}
                     onCopy={onCopyMessage}
                     ref={index === messages.length - 1 ? lastMessageRef : null}
-                    className={`rounded-xl px-3 py-1 ${message.role === "user" ? "self-end bg-blue-600 text-white" : "self-start bg-gray-100 text-black"}`}
+                    className={`max-w-md rounded-xl px-3 py-1 ${message.role === "user" ? "self-end bg-blue-600 text-white" : "self-start bg-gray-100 text-black"}`}
                 >
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                    </ReactMarkdown>
                 </div>
             ))}
         </div>
