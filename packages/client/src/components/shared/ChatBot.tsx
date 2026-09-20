@@ -1,4 +1,11 @@
-import { useRef, useState, type FC, type KeyboardEvent } from "react";
+import {
+    useEffect,
+    useRef,
+    useState,
+    type ClipboardEvent,
+    type FC,
+    type KeyboardEvent,
+} from "react";
 import axios from "axios";
 import ReactMarkdown from "react-markdown";
 import { useForm } from "react-hook-form";
@@ -21,25 +28,38 @@ type IMessage = {
 const ChatBot: FC = () => {
     const [messages, setMessages] = useState<IMessage[]>([]);
     const [isAssistantTyping, setIsAssistantTyping] = useState<boolean>(false);
+    const [error, setError] = useState<string>("");
     const conversationId = useRef(crypto.randomUUID());
+    const lastMessageRef = useRef<HTMLDivElement | null>(null);
     const { register, handleSubmit, reset, formState } = useForm<IFormData>();
 
+    useEffect(() => {
+        lastMessageRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
     const onSubmit = async ({ prompt }: IFormData) => {
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { content: prompt, role: "user" },
-        ]);
-        setIsAssistantTyping(true);
-        reset();
-        const { data } = await axios.post<IChatResponse>("/api/chat", {
-            prompt,
-            conversationId: conversationId.current,
-        });
-        setMessages((prevMessages) => [
-            ...prevMessages,
-            { content: data.message, role: "assistant" },
-        ]);
-        setIsAssistantTyping(false);
+        try {
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { content: prompt, role: "user" },
+            ]);
+            setIsAssistantTyping(true);
+            setError("");
+            reset({ prompt: "" });
+            const { data } = await axios.post<IChatResponse>("/api/chat", {
+                prompt,
+                conversationId: conversationId.current,
+            });
+            setMessages((prevMessages) => [
+                ...prevMessages,
+                { content: data.message, role: "assistant" },
+            ]);
+        } catch (error) {
+            console.error(error);
+            setError("Something went wrong, please try again.");
+        } finally {
+            setIsAssistantTyping(false);
+        }
     };
 
     const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
@@ -49,12 +69,26 @@ const ChatBot: FC = () => {
         }
     };
 
+    const onCopyMessage = (e: ClipboardEvent) => {
+        const selection = window.getSelection()?.toString().trim();
+        if (selection) {
+            e.preventDefault();
+            e.clipboardData.setData("text/plain", selection);
+        }
+    };
+
     return (
-        <div>
-            <div className="mb-10 flex flex-col gap-3">
+        <div className="flex h-full flex-col">
+            <div className="mb-10 flex flex-1 flex-col gap-3 overflow-y-auto">
                 {messages.map((message, index) => (
                     <div
                         key={index}
+                        onCopy={onCopyMessage}
+                        ref={
+                            index === messages.length - 1
+                                ? lastMessageRef
+                                : null
+                        }
                         className={`rounded-xl px-3 py-1 ${message.role === "user" ? "self-end bg-blue-600 text-white" : "self-start bg-gray-100 text-black"}`}
                     >
                         <ReactMarkdown>{message.content}</ReactMarkdown>
@@ -67,6 +101,7 @@ const ChatBot: FC = () => {
                         <div className="h-2 w-2 animate-pulse rounded-full bg-gray-800 [animation-delay:0.4s]"></div>
                     </div>
                 )}
+                {error && <p className="text-red-500">{error}</p>}
             </div>
             <form
                 // eslint-disable-next-line react-hooks/refs
@@ -79,6 +114,7 @@ const ChatBot: FC = () => {
                         required: true,
                         validate: (data) => data.trim().length > 0,
                     })}
+                    autoFocus
                     className="w-full resize-none border-0 focus:outline-0"
                     placeholder="Ask anything"
                     maxLength={1000}
