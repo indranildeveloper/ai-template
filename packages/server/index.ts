@@ -2,6 +2,7 @@ import express, { type Request, type Response } from "express";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import z from "zod";
+import { conversationRepository } from "./repositories/conversation.repository";
 
 dotenv.config();
 
@@ -24,13 +25,6 @@ app.get("/api/hello", (req: Request, res: Response) => {
     res.json({ message: "Hello World." });
 });
 
-type Message = {
-    role: "user" | "assistant";
-    content: string;
-};
-
-const conversations = new Map<string, Message[]>();
-
 const chatSchema = z.object({
     prompt: z
         .string()
@@ -49,30 +43,35 @@ app.post("/api/chat", async (req: Request, res: Response) => {
         return;
     }
 
-    const { prompt, conversationId } = req.body;
+    try {
+        const { prompt, conversationId } = req.body;
 
-    const messages = conversations.get(conversationId) ?? [];
+        const messages =
+            conversationRepository.getMessagesByConversationId(conversationId);
 
-    messages.push({
-        role: "user",
-        content: prompt,
-    });
+        messages.push({
+            role: "user",
+            content: prompt,
+        });
 
-    const response = await client.responses.create({
-        model: "openai/gpt-oss-safeguard-20b",
-        input: messages,
-        temperature: 0.2,
-        max_output_tokens: 100,
-    });
+        const response = await client.responses.create({
+            model: "openai/gpt-oss-safeguard-20b",
+            input: messages,
+            temperature: 0.2,
+            max_output_tokens: 100,
+        });
 
-    messages.push({
-        role: "assistant",
-        content: response.output_text,
-    });
+        messages.push({
+            role: "assistant",
+            content: response.output_text,
+        });
 
-    conversations.set(conversationId, messages);
+        conversationRepository.setMessages(conversationId, messages);
 
-    res.json({ message: response.output_text });
+        res.json({ message: response.output_text });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to generate a response." });
+    }
 });
 
 app.listen(port, () => {
