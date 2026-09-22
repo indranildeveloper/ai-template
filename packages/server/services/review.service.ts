@@ -1,11 +1,6 @@
-import OpenAI from "openai";
 import type { Review } from "../generated/prisma/client";
+import { llmClient } from "../llm/client";
 import { reviewRepository } from "../repositories/review.repository";
-
-const client = new OpenAI({
-    apiKey: process.env.GROQ_API_KEY,
-    baseURL: process.env.GROQ_BASE_URL,
-});
 
 export const reviewService = {
     async getReviews(productId: number): Promise<Review[]> {
@@ -21,13 +16,14 @@ export const reviewService = {
 
             ${joinedReviews}
         `;
-        const response = await client.responses.create({
+
+        const response = await llmClient.generateText({
             model: "openai/gpt-oss-20b",
-            input: prompt,
+            prompt,
             temperature: 0.2,
-            max_output_tokens: 500,
+            maxTokens: 500,
         });
 
-        return response.output_text;
+        return response.text;
     },
 };
