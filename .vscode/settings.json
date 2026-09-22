@@ -1,4 +1,7 @@
 {
+    "editor.codeActionsOnSave": {
+        "source.organizeImports": "always"
+    },
     "cSpell.words": [
         "autoincrement",
         "GROQ",
