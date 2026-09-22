@@ -1,3 +1,9 @@
 {
-    "cSpell.words": ["GROQ", "healthcheck", "mysqladmin", "treeify"]
+    "cSpell.words": [
+        "autoincrement",
+        "GROQ",
+        "healthcheck",
+        "mysqladmin",
+        "treeify"
+    ]
 }
