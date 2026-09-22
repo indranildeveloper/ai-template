@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { productRepository } from "../repositories/product.repository";
+import { reviewRepository } from "../repositories/review.repository";
 import { reviewService } from "../services/review.service";
 
 export const reviewController = {
@@ -19,6 +21,21 @@ export const reviewController = {
 
         if (isNaN(productId)) {
             res.status(400).json({ error: "Invalid product ID." });
+            return;
+        }
+        const product = await productRepository.getProduct(productId);
+
+        if (!product) {
+            res.status(400).json({ error: "Invalid product" });
+            return;
+        }
+
+        const reviews = await reviewRepository.getReviews(productId, 1);
+
+        if (!reviews.length) {
+            res.status(400).json({
+                error: "There are no reviews for this product to summarize.",
+            });
             return;
         }
 
