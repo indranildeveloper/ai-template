@@ -12,9 +12,17 @@ export const reviewController = {
             return;
         }
 
-        const reviews = await reviewService.getReviews(productId);
+        const product = await productRepository.getProduct(productId);
 
-        res.status(200).json(reviews);
+        if (!product) {
+            res.status(404).json({ error: "Product does not exists." });
+            return;
+        }
+
+        const reviews = await reviewRepository.getReviews(productId);
+        const summary = await reviewRepository.getReviewSummary(productId);
+
+        res.status(200).json({ summary, reviews });
     },
     async summarizeReviews(req: Request, res: Response) {
         const productId = Number(req.params.id);
