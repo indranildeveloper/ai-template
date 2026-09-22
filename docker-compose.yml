@@ -1,26 +1,22 @@
 services:
-  postgres:
-    image: postgres:18
-    container_name: postgres_database
+  mysql:
+    image: mysql:latest
+    container_name: mysql-database
     restart: unless-stopped
-
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-
     ports:
-      - "5432:5432"
-
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql
-
+      - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
 
 volumes:
-  postgres_data:
+  mysql_data:
