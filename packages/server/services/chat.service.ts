@@ -1,12 +1,12 @@
 import fs from "fs";
 import path from "path";
 import { llmClient } from "../llm/client";
-import template from "../prompts/chatbot.txt";
+import template from "../llm/prompts/chatbot.txt";
 import { conversationRepository } from "../repositories/conversation.repository";
 import type { IChatResponse } from "../types/chat";
 
 const parkInfo = fs.readFileSync(
-    path.join(__dirname, "..", "prompts", "WonderWorld.md"),
+    path.join(__dirname, "..", "llm", "prompts", "WonderWorld.md"),
     "utf-8"
 );
 

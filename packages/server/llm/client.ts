@@ -1,10 +1,14 @@
+import { InferenceClient } from "@huggingface/inference";
 import OpenAI from "openai";
 import type { IMessage } from "../types/chat";
+import summarizePrompt from "./prompts/summarize-reviews.txt";
 
-const client = new OpenAI({
+const openAIClient = new OpenAI({
     apiKey: process.env.GROQ_API_KEY,
     baseURL: process.env.GROQ_BASE_URL,
 });
+
+const inferenceClient = new InferenceClient(process.env.HF_TOKEN);
 
 interface IGenerateTextOptions {
     model?: string;
@@ -27,7 +31,7 @@ export const llmClient = {
         maxTokens = 300,
         instructions,
     }: IGenerateTextOptions): Promise<IGenerateTextResult> {
-        const response = await client.responses.create({
+        const response = await openAIClient.responses.create({
             model,
             input: prompt,
             instructions,
@@ -39,5 +43,19 @@ export const llmClient = {
             id: response.id,
             text: response.output_text,
         };
+    },
+    async summarizeReviews(reviews: string) {
+        const chatCompletion = await inferenceClient.chatCompletion({
+            model: "meta-llama/Llama-3.1-8B-Instruct:novita",
+            messages: [
+                { role: "system", content: summarizePrompt },
+                {
+                    role: "user",
+                    content: reviews,
+                },
+            ],
+        });
+
+        return chatCompletion.choices[0]?.message.content ?? "";
     },
 };
