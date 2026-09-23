@@ -23,14 +23,21 @@ interface IGetReviewsResponse {
 const ReviewList: FC<ReviewListProps> = ({ productId }) => {
     const [reviewData, setReviewData] = useState<IGetReviewsResponse>();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const [error, setError] = useState<string>("");
 
     const fetchReviews = async () => {
-        setIsLoading(true);
-        const { data } = await axios.get<IGetReviewsResponse>(
-            `/api/products/${productId}/reviews`
-        );
-        setReviewData(data);
-        setIsLoading(false);
+        try {
+            setIsLoading(true);
+            const { data } = await axios.get<IGetReviewsResponse>(
+                `/api/products/${productId}/reviews`
+            );
+            setReviewData(data);
+        } catch (error) {
+            console.error("Error: fetch reviews.", error);
+            setError("Could not fetch the reviews. Try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -51,6 +58,10 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
                 ))}
             </div>
         );
+    }
+
+    if (error) {
+        return <p className="text-red-500">{error}</p>;
     }
 
     return (
