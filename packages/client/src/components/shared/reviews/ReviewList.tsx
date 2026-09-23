@@ -1,5 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useEffect, useState, type FC } from "react";
+import { type FC } from "react";
 import Skeleton from "react-loading-skeleton";
 import StarRating from "./StarRating";
 
@@ -21,30 +22,22 @@ interface IGetReviewsResponse {
 }
 
 const ReviewList: FC<ReviewListProps> = ({ productId }) => {
-    const [reviewData, setReviewData] = useState<IGetReviewsResponse>();
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string>("");
+    const {
+        data: reviewData,
+        isLoading,
+        error,
+    } = useQuery<IGetReviewsResponse>({
+        queryKey: ["reviews", productId],
+        queryFn: () => fetchReviews(),
+    });
 
     const fetchReviews = async () => {
-        try {
-            setIsLoading(true);
-            const { data } = await axios.get<IGetReviewsResponse>(
-                `/api/products/${productId}/reviews`
-            );
-            setReviewData(data);
-        } catch (error) {
-            console.error("Error: fetch reviews.", error);
-            setError("Could not fetch the reviews. Try again.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
+        const { data } = await axios.get<IGetReviewsResponse>(
+            `/api/products/${productId}/reviews`
+        );
 
-    useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchReviews();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        return data;
+    };
 
     if (isLoading) {
         return (
@@ -61,7 +54,9 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
     }
 
     if (error) {
-        return <p className="text-red-500">{error}</p>;
+        return (
+            <p className="text-red-500">Could not fetch reviews, Try again.</p>
+        );
     }
 
     return (
