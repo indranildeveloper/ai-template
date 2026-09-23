@@ -1,9 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { type FC } from "react";
+import { useState, type FC } from "react";
 import { HiSparkles } from "react-icons/hi2";
-import Skeleton from "react-loading-skeleton";
+import ReviewSkeleton from "./ReviewSkeleton";
 import StarRating from "./StarRating";
 
 interface ReviewListProps {
@@ -23,7 +23,15 @@ interface IGetReviewsResponse {
     reviews: IReview[];
 }
 
+interface ISummarizeResponse {
+    summary: string;
+}
+
 const ReviewList: FC<ReviewListProps> = ({ productId }) => {
+    const [summary, setSummary] = useState<string>("");
+    const [isSummaryLoading, setIsSummaryLoading] = useState<boolean>(false);
+    const [summaryError, setSummaryError] = useState<string>("");
+
     const {
         data: reviewData,
         isLoading,
@@ -32,6 +40,24 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
         queryKey: ["reviews", productId],
         queryFn: () => fetchReviews(),
     });
+
+    const handleSummarize = async () => {
+        try {
+            setIsSummaryLoading(true);
+            setSummaryError("");
+
+            const { data } = await axios.post<ISummarizeResponse>(
+                `/api/products/${productId}/reviews/summarize`
+            );
+
+            setSummary(data.summary);
+        } catch (error) {
+            console.error("Error: Error while summarizing the text.", error);
+            setSummaryError("Could not summarize the reviews, try again.");
+        } finally {
+            setIsSummaryLoading(false);
+        }
+    };
 
     const fetchReviews = async () => {
         const { data } = await axios.get<IGetReviewsResponse>(
@@ -45,11 +71,7 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
         return (
             <div className="flex flex-col gap-5">
                 {[1, 2, 3].map((placeholder) => (
-                    <div key={placeholder}>
-                        <Skeleton width={150} />
-                        <Skeleton width={100} />
-                        <Skeleton count={2} />
-                    </div>
+                    <ReviewSkeleton key={placeholder} />
                 ))}
             </div>
         );
@@ -65,15 +87,30 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
         return null;
     }
 
+    const currentSummary = reviewData.summary ?? summary;
+
     return (
         <div>
             <div className="mb-5">
-                {reviewData?.summary ? (
-                    <p>{reviewData.summary}</p>
+                {currentSummary ? (
+                    <p>{currentSummary}</p>
                 ) : (
-                    <Button>
-                        <HiSparkles /> Summarize
-                    </Button>
+                    <div>
+                        <Button
+                            onClick={handleSummarize}
+                            disabled={isSummaryLoading}
+                        >
+                            <HiSparkles /> Summarize
+                        </Button>
+                        {isSummaryLoading && (
+                            <div className="py-3">
+                                <ReviewSkeleton />
+                            </div>
+                        )}
+                        {summaryError && (
+                            <p className="text-red-500">{summaryError}</p>
+                        )}
+                    </div>
                 )}
             </div>
             <div className="flex flex-col gap-5">
