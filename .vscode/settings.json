@@ -6,7 +6,9 @@
         "autoincrement",
         "GROQ",
         "healthcheck",
+        "huggingface",
         "mysqladmin",
+        "ollama",
         "treeify"
     ]
 }
