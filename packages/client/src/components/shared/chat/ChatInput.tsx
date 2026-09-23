@@ -1,7 +1,7 @@
+import { ArrowUpIcon } from "lucide-react";
 import type { FC, KeyboardEvent } from "react";
 import { useForm } from "react-hook-form";
-import { ArrowUpIcon } from "lucide-react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 
 export interface IChatFormData {
     prompt: string;

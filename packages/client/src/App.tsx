@@ -1,9 +1,12 @@
-import ChatBot from "./components/shared/ChatBot";
+// import ChatBot from "./components/shared/chat/ChatBot";
+
+import ReviewList from "./components/shared/reviews/ReviewList";
 
 function App() {
     return (
         <div className="h-screen w-full p-4">
-            <ChatBot />
+            {/* <ChatBot /> */}
+            <ReviewList productId={4} />
         </div>
     );
 }

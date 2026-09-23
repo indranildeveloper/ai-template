@@ -1,11 +1,11 @@
-import { useRef, useState, type FC } from "react";
-import axios from "axios";
-import TypingIndicator from "./TypingIndicator";
-import type { IMessage } from "./ChatMessages";
-import ChatMessages from "./ChatMessages";
-import ChatInput, { type IChatFormData } from "./ChatInput";
-import popSound from "@/assets/sounds/pop.mp3";
 import notificationSound from "@/assets/sounds/notification.mp3";
+import popSound from "@/assets/sounds/pop.mp3";
+import axios from "axios";
+import { useRef, useState, type FC } from "react";
+import ChatInput, { type IChatFormData } from "../chat/ChatInput";
+import type { IMessage } from "../chat/ChatMessages";
+import ChatMessages from "../chat/ChatMessages";
+import TypingIndicator from "../chat/TypingIndicator";
 
 const popAudio = new Audio(popSound);
 popAudio.volume = 0.2;
