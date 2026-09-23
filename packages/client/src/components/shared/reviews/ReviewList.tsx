@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import { useState, type FC } from "react";
+import { type FC } from "react";
 import { HiSparkles } from "react-icons/hi2";
 import ReviewSkeleton from "./ReviewSkeleton";
 import StarRating from "./StarRating";
@@ -28,36 +28,14 @@ interface ISummarizeResponse {
 }
 
 const ReviewList: FC<ReviewListProps> = ({ productId }) => {
-    const [summary, setSummary] = useState<string>("");
-    const [isSummaryLoading, setIsSummaryLoading] = useState<boolean>(false);
-    const [summaryError, setSummaryError] = useState<string>("");
-
-    const {
-        data: reviewData,
-        isLoading,
-        error,
-    } = useQuery<IGetReviewsResponse>({
+    const reviewsQuery = useQuery<IGetReviewsResponse>({
         queryKey: ["reviews", productId],
         queryFn: () => fetchReviews(),
     });
 
-    const handleSummarize = async () => {
-        try {
-            setIsSummaryLoading(true);
-            setSummaryError("");
-
-            const { data } = await axios.post<ISummarizeResponse>(
-                `/api/products/${productId}/reviews/summarize`
-            );
-
-            setSummary(data.summary);
-        } catch (error) {
-            console.error("Error: Error while summarizing the text.", error);
-            setSummaryError("Could not summarize the reviews, try again.");
-        } finally {
-            setIsSummaryLoading(false);
-        }
-    };
+    const summaryMutation = useMutation<ISummarizeResponse>({
+        mutationFn: () => summarizeReviews(),
+    });
 
     const fetchReviews = async () => {
         const { data } = await axios.get<IGetReviewsResponse>(
@@ -67,7 +45,15 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
         return data;
     };
 
-    if (isLoading) {
+    const summarizeReviews = async () => {
+        const { data } = await axios.post<ISummarizeResponse>(
+            `/api/products/${productId}/reviews/summarize`
+        );
+
+        return data;
+    };
+
+    if (reviewsQuery.isLoading) {
         return (
             <div className="flex flex-col gap-5">
                 {[1, 2, 3].map((placeholder) => (
@@ -77,17 +63,18 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
         );
     }
 
-    if (error) {
+    if (reviewsQuery.isError) {
         return (
             <p className="text-red-500">Could not fetch reviews, Try again.</p>
         );
     }
 
-    if (!reviewData?.reviews.length) {
+    if (!reviewsQuery.data?.reviews.length) {
         return null;
     }
 
-    const currentSummary = reviewData.summary ?? summary;
+    const currentSummary =
+        reviewsQuery.data.summary ?? summaryMutation.data?.summary;
 
     return (
         <div>
@@ -97,24 +84,26 @@ const ReviewList: FC<ReviewListProps> = ({ productId }) => {
                 ) : (
                     <div>
                         <Button
-                            onClick={handleSummarize}
-                            disabled={isSummaryLoading}
+                            onClick={() => summaryMutation.mutate()}
+                            disabled={summaryMutation.isPending}
                         >
                             <HiSparkles /> Summarize
                         </Button>
-                        {isSummaryLoading && (
+                        {summaryMutation.isPending && (
                             <div className="py-3">
                                 <ReviewSkeleton />
                             </div>
                         )}
-                        {summaryError && (
-                            <p className="text-red-500">{summaryError}</p>
+                        {summaryMutation.isError && (
+                            <p className="text-red-500">
+                                Could not summarize reviews. Try again.
+                            </p>
                         )}
                     </div>
                 )}
             </div>
             <div className="flex flex-col gap-5">
-                {reviewData?.reviews.map((review) => (
+                {reviewsQuery.data?.reviews.map((review) => (
                     <div key={review.id}>
                         <div className="font-semibold">{review.author}</div>
                         <div>
